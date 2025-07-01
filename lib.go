@@ -158,19 +158,29 @@ func readFile(file *zip.File) ([]byte, error) {
 //
 //	excelize.SplitCellName("AK74") // return "AK", 74, nil
 func SplitCellName(cell string) (string, int, error) {
-	alpha := func(r rune) bool {
-		return ('A' <= r && r <= 'Z') || ('a' <= r && r <= 'z') || (r == 36)
+	if cell == "" {
+		return "", -1, newInvalidCellNameError(cell)
 	}
-	if strings.IndexFunc(cell, alpha) == 0 {
-		i := strings.LastIndexFunc(cell, alpha)
-		if i >= 0 && i < len(cell)-1 {
-			col, rowStr := strings.ReplaceAll(cell[:i+1], "$", ""), cell[i+1:]
-			if row, err := strconv.Atoi(rowStr); err == nil && row > 0 {
-				return col, row, nil
-			}
+	var i int
+	for i = 0; i < len(cell); i++ {
+		if '0' <= cell[i] && cell[i] <= '9' {
+			break
+		}
+		if !('A' <= cell[i] && cell[i] <= 'Z') &&
+			!('a' <= cell[i] && cell[i] <= 'z') &&
+			cell[i] != '$' {
+			return "", -1, newInvalidCellNameError(cell)
 		}
 	}
-	return "", -1, newInvalidCellNameError(cell)
+	if i == 0 || i == len(cell) {
+		return "", -1, newInvalidCellNameError(cell)
+	}
+	col := strings.ReplaceAll(cell[:i], "$", "")
+	row, err := strconv.Atoi(cell[i:])
+	if err != nil || row <= 0 {
+		return "", -1, newInvalidCellNameError(cell)
+	}
+	return col, row, nil
 }
 
 // JoinCellName joins cell name from column name and row number.
