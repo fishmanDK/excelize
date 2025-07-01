@@ -1,4 +1,4 @@
-module github.com/DanilaShushkanov/excelize
+module github.com/fishmanDK/excelize
 
 go 1.23.0
 
